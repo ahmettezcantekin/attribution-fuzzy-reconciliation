@@ -86,23 +86,30 @@ def fig_divergence():
 def fig_recovery():
     df = pd.read_csv(ROOT / "results" / "p4_grid.csv")
     strong = ["dempster_shafer", "corr_cluster", "rel_wtd_mean"]
-    agg = df.groupby(["condition", "method"])[["MAE", "KL"]].mean().reset_index()
     order = ["default", "redundant_bloc", "high_noise", "heavy_bias", "misspec_capacity",
              "adversarial", "complementary", "more_sources_m7"]
-    mae_m, kl_m = [], []
+    mae_m, kl_m, mae_e, kl_e = [], [], [], []
     for c in order:
-        gi = agg[agg.condition == c].set_index("method")
-        om, ok = gi.loc["Choquet(ours)", "MAE"], gi.loc["Choquet(ours)", "KL"]
-        bm, bk = gi.loc[strong, "MAE"].min(), gi.loc[strong, "KL"].min()
+        sub = df[df.condition == c]
+        means = sub.groupby("method")[["MAE", "KL"]].mean()
+        om, ok = means.loc["Choquet(ours)", "MAE"], means.loc["Choquet(ours)", "KL"]
+        bms, bks = means.loc[strong, "MAE"].idxmin(), means.loc[strong, "KL"].idxmin()
+        bm, bk = means.loc[bms, "MAE"], means.loc[bks, "KL"]
         mae_m.append((bm - om) / bm * 100); kl_m.append((bk - ok) / bk * 100)
+        pm = sub.pivot_table(index="seed", columns="method", values="MAE")
+        pk = sub.pivot_table(index="seed", columns="method", values="KL")
+        dM = (pm[bms] - pm["Choquet(ours)"]) / pm[bms] * 100
+        dK = (pk[bks] - pk["Choquet(ours)"]) / pk[bks] * 100
+        mae_e.append(1.96 * dM.std(ddof=1) / np.sqrt(len(dM)))
+        kl_e.append(1.96 * dK.std(ddof=1) / np.sqrt(len(dK)))
     xp = np.arange(len(order))
     fig, ax = plt.subplots(figsize=(9, 4.0), constrained_layout=True)
-    ax.bar(xp - 0.2, mae_m, 0.4, label="MAE margin", color=BLUE)
-    ax.bar(xp + 0.2, kl_m, 0.4, label="KL margin", color=ORANGE)
+    ax.bar(xp - 0.2, mae_m, 0.4, yerr=mae_e, capsize=3, label="MAE margin", color=BLUE)
+    ax.bar(xp + 0.2, kl_m, 0.4, yerr=kl_e, capsize=3, label="KL margin", color=ORANGE)
     ax.axhline(0, color="#333", lw=0.8)
     ax.set_xticks(xp); ax.set_xticklabels(order, rotation=25, ha="right")
     ax.set_ylabel("improvement vs best strong baseline (%)")
-    ax.set_title("Recovery margin over the best strong baseline (mean of 3 seeds)")
+    ax.set_title("Recovery margin over the best strong baseline (mean of 10 seeds; 95% CI)")
     ax.legend()
     _save(fig, "fig3_recovery")
 

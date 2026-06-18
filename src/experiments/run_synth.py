@@ -23,7 +23,7 @@ from ..eval import metrics as M
 
 ROOT = Path(__file__).resolve().parents[2]
 N_GRID = 7000  # per-condition conversions
-SEEDS = [20260613, 7, 101]  # multi-seed: report MEAN margin -> guards against seed-overfit
+SEEDS = [20260613, 7, 101, 11, 23, 47, 89, 137, 199, 313]  # 10-seed: mean + CI, guards against seed-overfit
 BETA = 0.5
 
 

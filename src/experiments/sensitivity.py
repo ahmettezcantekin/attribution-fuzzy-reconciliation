@@ -22,7 +22,7 @@ from ..baselines import baselines as bl
 from ..eval import metrics as M
 
 ROOT = Path(__file__).resolve().parents[2]
-SEEDS = [20260613, 7, 101]
+SEEDS = [20260613, 7, 101, 11, 23, 47, 89, 137, 199, 313]
 N = 7000
 STRONG = ["dempster_shafer", "corr_cluster", "rel_wtd_mean"]
 
@@ -33,7 +33,8 @@ def _load(name):
     return c
 
 
-def _margin(cfg, beta, seed):
+def _eval(cfg, beta, seed):
+    """Per-seed MAE of ours and of each strong baseline on the common mask."""
     cfg = copy.deepcopy(cfg); cfg["seed"] = seed
     X, P, T, ch, src, meta = generate_tensors(cfg)
     r = rec.run(X, P, beta=beta)
@@ -46,8 +47,21 @@ def _margin(cfg, beta, seed):
     for _, v in strong.values():
         common &= v
     ours = M.mae(r["reconciled"][common], T[common])
-    best = min(M.mae(p[common], T[common]) for p, _ in strong.values())
-    return (best - ours) / best * 100, len(src)
+    smae = {k: M.mae(p[common], T[common]) for k, (p, _) in strong.items()}
+    return ours, smae, len(src)
+
+
+def _agg_margin(cfg, beta):
+    """Aggregate margin (same definition as run_synth): mean over seeds, then margin vs the
+    best-on-average strong baseline."""
+    ours, smae, m = [], {k: [] for k in STRONG}, None
+    for s in SEEDS:
+        o, sd, m = _eval(cfg, beta, s)
+        ours.append(o)
+        for k in STRONG:
+            smae[k].append(sd[k])
+    mo = float(np.mean(ours)); best = min(float(np.mean(smae[k])) for k in STRONG)
+    return (best - mo) / best * 100, m
 
 
 def beta_sweep():
@@ -56,9 +70,9 @@ def beta_sweep():
     for cond in ["default", "redundant_bloc"]:
         cfg = _load("synthetic_default.yaml" if cond == "default" else "synthetic_redundant.yaml")
         for b in betas:
-            margs = [_margin(cfg, b, s)[0] for s in SEEDS]
-            rows.append({"condition": cond, "beta": b, "margin_MAE_pct": float(np.mean(margs))})
-            print(f"[beta] {cond} beta={b}: margin={np.mean(margs):+.1f}%")
+            marg, _ = _agg_margin(cfg, b)
+            rows.append({"condition": cond, "beta": b, "margin_MAE_pct": float(marg)})
+            print(f"[beta] {cond} beta={b}: margin={marg:+.1f}%")
     return pd.DataFrame(rows)
 
 
@@ -79,10 +93,9 @@ def m_sweep():
     rows = []
     for bloc in range(1, 6):           # bloc 1..5 + 2 independent => m = 3..7
         cfg = _redundant_cfg_with_bloc(bloc)
-        res = [_margin(cfg, 0.5, s) for s in SEEDS]
-        margs = [x[0] for x in res]; m = res[0][1]
-        rows.append({"m_sources": m, "bloc_size": bloc, "margin_MAE_pct": float(np.mean(margs))})
-        print(f"[m] bloc={bloc} m={m}: margin={np.mean(margs):+.1f}%")
+        marg, m = _agg_margin(cfg, 0.5)
+        rows.append({"m_sources": m, "bloc_size": bloc, "margin_MAE_pct": float(marg)})
+        print(f"[m] bloc={bloc} m={m}: margin={marg:+.1f}%")
     return pd.DataFrame(rows)
 
 

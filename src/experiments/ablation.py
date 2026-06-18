@@ -29,7 +29,7 @@ from ..eval.calibration import conformal_coverage
 
 ROOT = Path(__file__).resolve().parents[2]
 N = 7000                       # match run_synth.N_GRID
-SEEDS = [20260613, 7, 101]     # match run_synth.SEEDS
+SEEDS = [20260613, 7, 101, 11, 23, 47, 89, 137, 199, 313]     # match run_synth.SEEDS
 BETA = 0.5
 
 
@@ -104,7 +104,7 @@ def main():
 
     print("=== Non-additivity ablation (full 2-additive vs additive m2=0; mean of 3 seeds, N=7000, gate on) ===")
     print(df.round(4).to_string(index=False))
-    print("\n=== Mamdani ablation (band efficiency at nominal 90% coverage; mean of 3 seeds) ===")
+    print("\n=== Mamdani ablation (band efficiency at nominal 90% coverage; mean of 10 seeds) ===")
     print(f"  Mamdani-adaptive : coverage={ba['mamdani_cov90']:.3f}  mean width={ba['mamdani_width']:.3f}")
     print(f"  constant-conf    : coverage={ba['constant_cov90']:.3f}  mean width={ba['constant_width']:.3f}")
     verdict = "efficiency" if ba["mamdani_width"] < ba["constant_width"] else "interpretability (not efficiency)"
