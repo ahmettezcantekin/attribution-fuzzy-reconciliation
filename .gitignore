@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Virtual environment
+.venv/
+venv/
+
+# Secrets / credentials
+*.env
+.env
+secrets*
+*token*
+
+# Large, regenerable synthetic data (recreate via src.synth.generate)
+results/synth_*.csv
+results/synth_*.json
+
+# OS
+Thumbs.db
+.DS_Store

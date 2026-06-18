@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the paper and this repository."
+title: "Uncertainty-Aware Reconciliation of Conflicting Sources on the Probability Simplex via Choquet Aggregation over Fuzzy Measures"
+authors:
+  - family-names: Tekin
+    given-names: Ahmet Tezcan
+    affiliation: "Department of Management Engineering, Istanbul Technical University"
+    email: tekina@itu.edu.tr
+version: 0.1.0
+date-released: 2026-06-13
+license: MIT
+keywords:
+  - Choquet integral
+  - fuzzy measure
+  - information fusion
+  - Mamdani inference
+  - attribution
+  - uncertainty reconciliation

@@ -1,0 +1,39 @@
+# Higher-order-interaction condition (plan §5.2, §6 gate #5).
+# A REDUNDANT BLOC of three near-duplicate trackers (same visibility + rule + a SHARED
+# correlated-noise group) plus two independent informative sources. Additive/naive
+# aggregation gives the bloc 3x weight (double-counting); a sub-additive Choquet capacity
+# down-weights the redundant coalition. This is where non-additivity should be decisive.
+
+seed: 20260613
+from_year: 2015
+
+ground_truth:
+  model: latent_incrementality
+  num_channels: 5
+  num_conversions: 20000
+  journey_length: {dist: poisson, lam: 3}
+  lift_concentration: 0.6
+
+experiment:
+  adversarial_source: false
+  misspecification: dependence    # the bloc shares hidden noise -> higher-order dependence
+  group_noise_sigma: 0.35
+
+sources:
+  # --- redundant bloc (3 near-duplicates, shared noise group 1) ---
+  - {name: tracker_a, visibility: [meta, google, organic], rule: last_touch, window_days: 7,
+     self_preference: null, noise: {kind: multiplicative, sigma: 0.10}, missingness: 0.02, noise_group: 1}
+  - {name: tracker_b, visibility: [meta, google, organic], rule: last_touch, window_days: 7,
+     self_preference: null, noise: {kind: multiplicative, sigma: 0.10}, missingness: 0.02, noise_group: 1}
+  - {name: tracker_c, visibility: [meta, google, organic], rule: last_touch, window_days: 7,
+     self_preference: null, noise: {kind: multiplicative, sigma: 0.10}, missingness: 0.02, noise_group: 1}
+  # --- two independent informative sources ---
+  - {name: indep_datadriven, visibility: [meta, applovin, google, organic, other], rule: data_driven_proxy,
+     window_days: 7, self_preference: null, noise: {kind: multiplicative, sigma: 0.12}, missingness: 0.02}
+  - {name: indep_position, visibility: [meta, applovin, google, organic, other], rule: position_based,
+     window_days: 7, self_preference: null, noise: {kind: additive, sigma: 0.05}, missingness: 0.02}
+
+output:
+  long_table: results/synth_redundant_sources.csv
+  ground_truth: results/synth_redundant_truth.csv
+  run_metadata: results/synth_redundant_meta.json

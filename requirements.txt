@@ -1,0 +1,15 @@
+# Core scientific stack
+numpy
+pandas
+scipy
+matplotlib
+seaborn
+pyyaml
+jupyter
+
+# Fuzzy inference (Mamdani). scikit-fuzzy is the default; simpful is a fallback.
+# NOTE: verify wheel availability on the pinned Python before freezing exact versions.
+scikit-fuzzy
+
+# Choquet integral / fuzzy measures (capacity) are implemented in-repo (src/methods/),
+# a custom implementation is cleaner than a dependency for capacity identification.

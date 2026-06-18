@@ -1,0 +1,70 @@
+# Synthetic generator configuration (Phase 2).
+# We define the TRUE credit (known only to us), then generate each source as a
+# distorted observation. Ground truth lives ONLY in the generator (see plan §4).
+#
+# ANTI-CIRCULARITY (plan §4.0): the truth process below must NOT mirror the
+# method's assumptions. Truth comes from a latent-incrementality process; the
+# method never sees it. Misspecification regimes are mandatory, not optional.
+
+seed: 20260612            # RNG seed — every run snapshots this for reproducibility
+
+ground_truth:
+  model: latent_incrementality   # NOT a rule the method assumes (firewall)
+  num_channels: 5                # K
+  num_conversions: 20000
+  journey_length:
+    dist: poisson
+    lam: 3
+  # hidden per-channel true lift; journeys realize it into credit vectors c* (sum to 1)
+  lift_concentration: 0.6        # Dirichlet-style spread of true channel lift
+
+sources:
+  # each source is a distorted lens on c*. m = len(sources).
+  - name: meta
+    visibility: [meta, google, organic]      # V_s — partial observability (main divergence driver)
+    rule: last_touch
+    window_days: 7
+    self_preference: {channel: meta, beta: 1.4}
+    noise: {kind: multiplicative, sigma: 0.15}
+    missingness: 0.02
+  - name: applovin
+    visibility: [applovin, google, organic]
+    rule: time_decay
+    half_life_days: 1.0
+    window_days: 1                # SKAN-like truncation
+    self_preference: {channel: applovin, beta: 1.3}
+    noise: {kind: multiplicative, sigma: 0.20}
+    missingness: 0.05
+  - name: google_ads
+    visibility: [meta, applovin, google, organic]
+    rule: position_based
+    window_days: 7
+    self_preference: {channel: google, beta: 1.25}
+    noise: {kind: additive, sigma: 0.05}
+    missingness: 0.03
+  - name: singular_lasttouch
+    visibility: [meta, applovin, google, organic, other]
+    rule: last_touch
+    window_days: 7
+    self_preference: null
+    noise: {kind: multiplicative, sigma: 0.10}
+    missingness: 0.01
+  - name: singular_datadriven
+    visibility: [meta, applovin, google, organic, other]
+    rule: data_driven_proxy
+    window_days: 7
+    self_preference: null
+    noise: {kind: multiplicative, sigma: 0.12}
+    missingness: 0.01
+
+# Knobs swept in the experiment battery / sensitivity analysis (plan §4.2, §5.4)
+experiment:
+  overlap_structure: redundant   # redundant | complementary | mixed
+  adversarial_source: false      # robustness condition (plan §5.4)
+  misspecification: none         # none | capacity | dependence | distortion_family (plan §4.0 / §6 gate #2)
+  volume_per_cell: 200           # low volume => noisier cells
+
+output:
+  long_table: results/synth_sources.csv     # conversion_id, channel, source, credit
+  ground_truth: results/synth_truth.csv     # conversion_id, channel, true_credit
+  run_metadata: results/synth_run_meta.json # config snapshot + seed
