@@ -117,7 +117,7 @@ def fig_recovery():
 # ---------------------------------------------------------------- fig 4
 def fig_calibration():
     from ..eval.calibration import conformal_coverage
-    X, P, T, channels, sources, meta = generate_tensors(_load("synthetic_default.yaml", n=12000))
+    X, P, T, channels, sources, meta = generate_tensors(_load("synthetic_default.yaml", n=7000))
     r = rec.run(X, P)
     levels = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
     res = conformal_coverage(r["reconciled"], T, r["band_half"], r["valid"], levels=tuple(levels))
